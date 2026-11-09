@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Campus Fix Protótipo</title>
+<title>FixUNIPVC Protótipo</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -262,7 +262,7 @@ textarea { min-height: 80px; resize: vertical; }
 <body>
 <div class="stage">
   <aside class="notes">
-    <h1>Campus <span>Fix</span></h1>
+    <h1>Fix<span>UNIPVC</span></h1>
     <p>Protótipo navegável para a Fase 1 do projeto de SIR. Reportar, votar e acompanhar problemas nos polos da UNIPVC. Todos os dados são exemplos.</p>
     <div>
       <h2>Ecrãs</h2>
@@ -475,7 +475,7 @@ textarea { min-height: 80px; resize: vertical; }
     const catChips = ['<button type="button" class="chip" data-act="fcat" data-v="todas" aria-pressed="' + (f.cat === "todas") + '">Todas</button>']
       .concat(Object.keys(CATS).map(k => '<button type="button" class="chip" data-act="fcat" data-v="' + k + '" aria-pressed="' + (f.cat === k) + '">' + IC[k] + CATS[k] + "</button>")).join("");
 
-    return '<div class="topbar"><div class="brand"><span class="brand-mark">' + IC.tool + "</span><h1>Campus Fix</h1></div>" + liveBadge() + "</div>" +
+    return '<div class="topbar"><div class="brand"><span class="brand-mark">' + IC.tool + "</span><h1>FixUNIPVC</h1></div>" + liveBadge() + "</div>" +
       '<div class="pad stack" style="padding-bottom:12px">' +
         '<select class="plain" aria-label="Escola" data-act="fescola">' + Object.keys(ESCOLAS).map(k => '<option value="' + k + '"' + (k === f.escola ? " selected" : "") + ">" + ESCOLAS[k].nome + "</option>").join("") + "</select>" +
         '<div class="summary"><div class="sum"><b>' + abertos + '</b><span>em aberto</span></div><div class="sum"><b>' + resSemana + '</b><span>resolvidos 7 dias</span></div><div class="sum"><b>' + meusVotos + '</b><span>votados por ti</span></div></div>' +
@@ -610,7 +610,7 @@ textarea { min-height: 80px; resize: vertical; }
 
   function vLogin() {
     return '<div class="login"><span class="big-mark">' + IC.tool + "</span>" +
-      "<div><h2>Campus Fix</h2><p>Vê, reporta e acompanha os problemas do teu campus. Quanto mais pessoas votam, mais depressa chegam a quem os resolve.</p></div>" +
+      "<div><h2>FixUNIPVC</h2><p>Vê, reporta e acompanha os problemas do teu campus. Quanto mais pessoas votam, mais depressa chegam a quem os resolve.</p></div>" +
       '<form class="stack" data-form="login" novalidate>' +
         '<div class="field"><label for="lEmail">Email institucional</label><input type="email" id="lEmail" placeholder="nome@ipvc.pt" value="ana.costa@ipvc.pt" autocomplete="username"></div>' +
         '<div class="field"><label for="lPass">Palavra-passe</label><input type="password" id="lPass" value="prototipo" autocomplete="current-password"></div>' +
