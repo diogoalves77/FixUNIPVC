@@ -1,0 +1,820 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Campus Fix Protótipo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* Layout: app de telemóvel centrada; em ecrãs largos, painel lateral com notas do protótipo. Acento amarelo "sinalização". */
+:root {
+  --bg: #e9ecea;
+  --surface: #ffffff;
+  --ink: #1b2220;
+  --muted: #5b6662;
+  --line: #d8ddda;
+  --accent: #f4b80a;
+  --accent-ink: #1b2220;
+  --soft: #f3f5f4;
+  --st-reportado: #6b7a90;
+  --st-visto: #c98a00;
+  --st-resolucao: #2f6fd6;
+  --st-resolvido: #23895a;
+  --danger: #c2412d;
+  --font-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --font-body: "Public Sans", "Segoe UI", system-ui, sans-serif;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f1312; --surface: #181e1c; --ink: #e7ece9; --muted: #9aa6a1; --line: #2a3330;
+    --accent: #f6c534; --accent-ink: #15110a; --soft: #1f2624;
+    --st-reportado: #93a3ba; --st-visto: #e5a920; --st-resolucao: #6b9cf0; --st-resolvido: #4cc28a; --danger: #ef7b66;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f1312; --surface: #181e1c; --ink: #e7ece9; --muted: #9aa6a1; --line: #2a3330;
+  --accent: #f6c534; --accent-ink: #15110a; --soft: #1f2624;
+  --st-reportado: #93a3ba; --st-visto: #e5a920; --st-resolucao: #6b9cf0; --st-resolvido: #4cc28a; --danger: #ef7b66;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; }
+body { background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 15px; line-height: 1.45; }
+button, input, select, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+a { color: inherit; }
+h1, h2, h3 { font-family: var(--font-display); text-wrap: balance; margin: 0; line-height: 1.15; }
+
+.stage { display: grid; grid-template-columns: minmax(0, 1fr); justify-items: center; gap: 40px; min-height: 100%; padding: 0; }
+@media (min-width: 960px) {
+  .stage { grid-template-columns: 340px 420px; justify-content: center; align-items: start; padding: 32px 24px; }
+}
+
+/* Painel lateral */
+.notes { display: none; }
+@media (min-width: 960px) {
+  .notes { display: flex; flex-direction: column; gap: 20px; position: sticky; top: 32px; }
+}
+.notes h1 { font-size: 34px; font-weight: 800; letter-spacing: -0.02em; }
+.notes h1 span { background: var(--accent); color: var(--accent-ink); padding: 0 6px; border-radius: 4px; }
+.notes p { margin: 0; color: var(--muted); max-width: 34ch; }
+.notes h2 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); font-family: var(--font-body); font-weight: 700; margin-bottom: 8px; }
+.screen-links { display: flex; flex-direction: column; gap: 2px; margin: 0; padding: 0; list-style: none; }
+.screen-links a { display: block; padding: 6px 10px; border-radius: 6px; text-decoration: none; }
+.screen-links a:hover { background: var(--surface); }
+.screen-links a.on { background: var(--surface); font-weight: 600; box-shadow: inset 3px 0 0 var(--accent); }
+.seg { display: inline-flex; background: var(--soft); border: 1px solid var(--line); border-radius: 999px; padding: 3px; gap: 2px; }
+.seg button { border: 0; background: transparent; padding: 6px 12px; border-radius: 999px; font-size: 13px; font-weight: 600; color: var(--muted); }
+.seg button[aria-pressed="true"] { background: var(--surface); color: var(--ink); box-shadow: 0 1px 2px rgba(0,0,0,.12); }
+.notes .seg { background: var(--surface); }
+.notes .seg button[aria-pressed="true"] { background: var(--ink); color: var(--surface); }
+
+/* Telemóvel */
+.phone { width: 100%; max-width: 420px; min-height: 100%; background: var(--surface); display: flex; flex-direction: column; position: relative; }
+@media (min-width: 960px) {
+  .phone { min-height: 0; height: 860px; border-radius: 34px; border: 1px solid var(--line); box-shadow: 0 30px 60px -30px rgba(0,0,0,.35); overflow: hidden; }
+}
+.proto-banner { background: var(--ink); color: var(--surface); font-size: 12px; padding: 5px 16px; display: flex; justify-content: space-between; gap: 8px; }
+@media (min-width: 960px) { .proto-banner { display: none; } }
+.screen { flex: 1; overflow-y: auto; display: flex; flex-direction: column; }
+.topbar { display: flex; align-items: center; gap: 10px; padding: 14px 16px 10px; position: sticky; top: 0; background: var(--surface); z-index: 2; border-bottom: 1px solid transparent; }
+.topbar.bordered { border-bottom-color: var(--line); }
+.topbar h1 { font-size: 21px; font-weight: 800; flex: 1; letter-spacing: -0.01em; }
+.brand { display: flex; align-items: center; gap: 8px; flex: 1; }
+.brand-mark { width: 30px; height: 30px; border-radius: 8px; background: var(--accent); color: var(--accent-ink); display: grid; place-items: center; }
+.brand-mark svg { width: 18px; height: 18px; }
+.brand h1 { flex: none; }
+.live { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: var(--st-resolvido); }
+.live i { width: 8px; height: 8px; border-radius: 50%; background: currentColor; animation: pulse 1.6s infinite; }
+.live.off { color: var(--muted); }
+.live.off i { animation: none; }
+@keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .3; } }
+.icon-btn { border: 0; background: var(--soft); width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center; }
+.icon-btn svg { width: 18px; height: 18px; }
+.pad { padding: 0 16px; }
+.stack { display: flex; flex-direction: column; gap: 12px; }
+
+/* Barra de navegação */
+.tabbar { display: flex; border-top: 1px solid var(--line); background: var(--surface); padding: 6px 4px 8px; position: sticky; bottom: 0; }
+.tabbar a { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 11px; font-weight: 600; color: var(--muted); text-decoration: none; padding: 4px 0; position: relative; border-radius: 10px; }
+.tabbar a.on { color: var(--ink); }
+.tabbar svg { width: 22px; height: 22px; }
+.tabbar a.cta .cta-dot { width: 44px; height: 32px; border-radius: 12px; background: var(--accent); color: var(--accent-ink); display: grid; place-items: center; }
+.tabbar .badge { position: absolute; top: 0; left: 50%; margin-left: 4px; background: var(--danger); color: #fff; font-size: 10px; min-width: 17px; height: 17px; border-radius: 9px; display: grid; place-items: center; padding: 0 4px; }
+
+/* Feed */
+.summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.sum { background: var(--soft); border-radius: 12px; padding: 10px 12px; }
+.sum b { display: block; font-family: var(--font-display); font-size: 22px; font-variant-numeric: tabular-nums; }
+.sum span { font-size: 12px; color: var(--muted); }
+.chips { display: flex; gap: 6px; overflow-x: auto; padding: 2px 16px 4px; scrollbar-width: none; }
+.chip { flex: none; border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 6px 12px; font-size: 13px; font-weight: 500; display: inline-flex; gap: 6px; align-items: center; }
+.chip svg { width: 15px; height: 15px; }
+.chip[aria-pressed="true"] { background: var(--ink); color: var(--surface); border-color: var(--ink); }
+.row-between { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
+select.plain { border: 1px solid var(--line); background: var(--surface); border-radius: 8px; padding: 6px 8px; font-size: 13px; }
+
+.card { display: grid; grid-template-columns: 44px 1fr; gap: 12px; padding: 14px 16px; border-bottom: 1px solid var(--line); text-decoration: none; align-items: start; }
+.card:hover { background: var(--soft); }
+.cat-tile { width: 44px; height: 44px; border-radius: 12px; display: grid; place-items: center; background: var(--soft); border: 1px solid var(--line); }
+.cat-tile svg { width: 22px; height: 22px; }
+.card h3 { font-family: var(--font-body); font-size: 15px; font-weight: 600; line-height: 1.3; }
+.meta { font-size: 12.5px; color: var(--muted); margin-top: 3px; }
+.card .pill { margin-top: 8px; }
+.vote-row { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-top: 10px; }
+.vote-count { font-size: 13px; font-weight: 600; color: var(--muted); font-variant-numeric: tabular-nums; }
+.vote-btn { display: inline-flex; align-items: center; gap: 6px; border: 1.5px solid var(--ink); background: var(--surface); color: var(--ink); border-radius: 999px; padding: 6px 14px; font-size: 13px; font-weight: 700; }
+.vote-btn svg { width: 15px; height: 15px; }
+.vote-btn:hover { background: var(--soft); }
+.vote-btn.on { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.vote-note { margin: -8px 16px 16px; font-size: 13px; color: var(--muted); }
+.flash { animation: flash 1.2s ease-out; }
+@keyframes flash { 0% { box-shadow: 0 0 0 0 var(--accent); transform: scale(1.08); } 100% { box-shadow: 0 0 0 10px transparent; transform: scale(1); } }
+
+.pill { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; padding: 3px 9px 3px 8px; border-radius: 999px; border: 1px solid currentColor; }
+.pill::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.st-reportado { color: var(--st-reportado); }
+.st-visto { color: var(--st-visto); }
+.st-resolucao { color: var(--st-resolucao); }
+.st-resolvido { color: var(--st-resolvido); }
+.empty { padding: 40px 24px; text-align: center; color: var(--muted); }
+
+/* Detalhe */
+.photo { height: 190px; display: grid; place-items: center; position: relative; overflow: hidden;
+  background: repeating-linear-gradient(-45deg, var(--soft) 0 14px, var(--surface) 14px 28px); border-bottom: 1px solid var(--line); }
+.photo svg { width: 64px; height: 64px; color: var(--muted); opacity: .6; }
+.photo img { width: 100%; height: 100%; object-fit: cover; }
+.photo .cap { position: absolute; bottom: 8px; left: 10px; font-size: 11px; color: var(--muted); background: var(--surface); padding: 2px 8px; border-radius: 6px; }
+.detail-head { padding: 16px; display: flex; flex-direction: column; gap: 8px; }
+.detail-head h2 { font-size: 22px; font-weight: 800; letter-spacing: -0.01em; }
+.desc { margin: 0; max-width: 62ch; }
+.actions { display: flex; gap: 8px; padding: 0 16px 16px; }
+.btn { border: 1px solid var(--line); background: var(--surface); border-radius: 12px; padding: 11px 14px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+.btn svg { width: 18px; height: 18px; }
+.btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.btn.dark { background: var(--ink); color: var(--surface); border-color: var(--ink); }
+.btn.grow { flex: 1; }
+.btn.small { padding: 7px 10px; font-size: 13px; border-radius: 9px; }
+.btn.voted { background: var(--ink); color: var(--surface); border-color: var(--ink); }
+.section { padding: 16px; border-top: 8px solid var(--soft); display: flex; flex-direction: column; gap: 12px; }
+.section h3 { font-size: 16px; font-weight: 700; }
+
+.timeline { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.timeline li { display: grid; grid-template-columns: 22px 1fr; gap: 10px; position: relative; padding-bottom: 14px; }
+.timeline li:last-child { padding-bottom: 0; }
+.timeline li::before { content: ""; position: absolute; left: 10px; top: 20px; bottom: 0; width: 2px; background: var(--line); }
+.timeline li:last-child::before { display: none; }
+.dot { width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--line); background: var(--surface); display: grid; place-items: center; }
+.dot svg { width: 12px; height: 12px; }
+.timeline li.done .dot { background: currentColor; border-color: currentColor; }
+.timeline li.done .dot svg { color: var(--surface); }
+.timeline li.todo { color: var(--muted); }
+.timeline li.todo .dot { border-style: dashed; }
+.tl-title { font-weight: 600; color: var(--ink); }
+.timeline li.todo .tl-title { color: var(--muted); font-weight: 500; }
+.tl-note { font-size: 13px; color: var(--muted); }
+
+.staff-box { background: var(--soft); border: 1px dashed var(--st-resolucao); border-radius: 12px; padding: 12px; display: flex; flex-direction: column; gap: 10px; }
+.staff-box .lbl { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--st-resolucao); }
+.btn-row { display: flex; gap: 6px; flex-wrap: wrap; }
+
+.comment { display: grid; grid-template-columns: 32px 1fr; gap: 10px; }
+.avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--soft); border: 1px solid var(--line); display: grid; place-items: center; font-size: 12px; font-weight: 700; }
+.comment.oficial .avatar { background: var(--st-resolucao); color: #fff; border-color: transparent; }
+.comment .who { font-size: 13px; font-weight: 600; display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.comment .who small { color: var(--muted); font-weight: 400; }
+.tag-oficial { font-size: 10.5px; font-weight: 700; color: var(--st-resolucao); border: 1px solid currentColor; padding: 0 6px; border-radius: 4px; }
+.comment p { margin: 2px 0 0; font-size: 14px; }
+.comment.oficial p { background: var(--soft); padding: 8px 10px; border-radius: 0 10px 10px 10px; border-left: 3px solid var(--st-resolucao); }
+.composer { display: flex; gap: 8px; }
+.composer input { flex: 1; }
+
+/* Formulários */
+.field { display: flex; flex-direction: column; gap: 5px; }
+.field label, .field .lab { font-size: 13px; font-weight: 600; }
+.field .hint { font-size: 12px; color: var(--muted); }
+input[type="text"], input[type="email"], input[type="password"], select.input, textarea {
+  border: 1px solid var(--line); background: var(--surface); border-radius: 10px; padding: 10px 12px; width: 100%; }
+textarea { min-height: 80px; resize: vertical; }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.cat-pick { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.cat-pick button { border: 1px solid var(--line); background: var(--surface); border-radius: 10px; padding: 8px 2px; display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 11px; font-weight: 600; }
+.cat-pick button svg { width: 20px; height: 20px; }
+.cat-pick button[aria-pressed="true"] { border-color: var(--ink); background: var(--ink); color: var(--surface); }
+.upload { border: 1.5px dashed var(--line); border-radius: 12px; padding: 14px; display: flex; align-items: center; gap: 12px; color: var(--muted); font-size: 13px; cursor: pointer; }
+.upload svg { width: 26px; height: 26px; flex: none; }
+.upload img { width: 64px; height: 64px; object-fit: cover; border-radius: 8px; }
+.upload input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+.dup { border: 1px solid var(--st-visto); background: var(--soft); border-radius: 12px; padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+.dup b { color: var(--st-visto); font-size: 13px; }
+.dup-item { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: 14px; }
+.error { color: var(--danger); font-size: 13px; font-weight: 600; }
+
+/* Notificações */
+.notif { display: grid; grid-template-columns: 10px 1fr; gap: 10px; padding: 12px 16px; border-bottom: 1px solid var(--line); text-decoration: none; }
+.notif:hover { background: var(--soft); }
+.notif .ud { width: 8px; height: 8px; border-radius: 50%; margin-top: 7px; background: transparent; }
+.notif.unread .ud { background: var(--danger); }
+.notif.unread .ntxt { font-weight: 600; }
+.ntxt { font-size: 14px; }
+
+/* Painel */
+.tiles { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+.tile { border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; border-left-width: 4px; }
+.tile b { font-family: var(--font-display); font-size: 26px; display: block; font-variant-numeric: tabular-nums; color: var(--ink); }
+.tile span { font-size: 12.5px; font-weight: 600; }
+.bars { display: flex; flex-direction: column; gap: 8px; }
+.bar { display: grid; grid-template-columns: 110px 1fr 28px; gap: 8px; align-items: center; font-size: 13px; }
+.bar .track { height: 10px; background: var(--soft); border-radius: 5px; overflow: hidden; }
+.bar .fill { height: 100%; background: var(--ink); border-radius: 5px; }
+.bar b { text-align: right; font-variant-numeric: tabular-nums; }
+.queue-row { display: grid; grid-template-columns: 1fr auto; gap: 8px; padding: 10px 0; border-bottom: 1px solid var(--line); align-items: center; }
+.queue-row a { text-decoration: none; font-weight: 600; font-size: 14px; }
+
+/* Entrar / Perfil */
+.login { flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 22px; padding: 32px 24px; }
+.login .big-mark { width: 56px; height: 56px; border-radius: 16px; background: var(--accent); color: var(--accent-ink); display: grid; place-items: center; }
+.login .big-mark svg { width: 32px; height: 32px; }
+.login h2 { font-size: 32px; font-weight: 800; letter-spacing: -0.02em; }
+.login p { margin: 0; color: var(--muted); }
+.profile-head { display: flex; gap: 14px; align-items: center; padding: 8px 16px 16px; }
+.profile-head .avatar { width: 56px; height: 56px; font-size: 18px; }
+.stat-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+
+/* Toast */
+.toast { position: absolute; left: 12px; right: 12px; top: 12px; z-index: 10; background: var(--ink); color: var(--surface); border-radius: 14px; padding: 12px 14px; display: flex; gap: 10px; align-items: flex-start; box-shadow: 0 12px 30px -10px rgba(0,0,0,.5); transform: translateY(-130%); transition: transform .3s ease; cursor: pointer; font-size: 14px; }
+.toast.show { transform: translateY(0); }
+.toast .t-ic { width: 26px; height: 26px; border-radius: 8px; background: var(--accent); color: var(--accent-ink); display: grid; place-items: center; flex: none; }
+.toast .t-ic svg { width: 15px; height: 15px; }
+.toast small { display: block; opacity: .7; font-size: 12px; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+</style>
+</head>
+<body>
+<div class="stage">
+  <aside class="notes">
+    <h1>Campus <span>Fix</span></h1>
+    <p>Protótipo navegável para a Fase 1 do projeto de SIR. Reportar, votar e acompanhar problemas nos polos da UNIPVC. Todos os dados são exemplos.</p>
+    <div>
+      <h2>Ecrãs</h2>
+      <ul class="screen-links" id="screenLinks"></ul>
+    </div>
+    <div>
+      <h2>Ver como</h2>
+      <div class="seg" role="group" aria-label="Perfil de utilizador" id="roleSegAside"></div>
+    </div>
+    <div>
+      <h2>Tempo real (simulado)</h2>
+      <p style="margin-bottom:10px">A cada poucos segundos chegam votos, novas ocorrências e mudanças de estado, como chegariam por Socket.IO.</p>
+      <button class="btn small" id="liveToggle" type="button"></button>
+    </div>
+  </aside>
+
+  <main class="phone" id="phone">
+    <div class="proto-banner"><span>Protótipo · dados de exemplo</span><span id="bannerRole"></span></div>
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    <div class="screen" id="screen"></div>
+    <nav class="tabbar" id="tabbar" aria-label="Navegação principal"></nav>
+  </main>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  /* ---------- Ícones ---------- */
+  const sv = (p, extra) => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"' + (extra || "") + ">" + p + "</svg>";
+  const IC = {
+    wifi: sv('<path d="M2.5 9a14 14 0 0 1 19 0M5.5 12.5a9.5 9.5 0 0 1 13 0M8.8 16a5 5 0 0 1 6.4 0"/><circle cx="12" cy="19.3" r="1" fill="currentColor"/>'),
+    wc: sv('<path d="M12 3.5s6 6.6 6 10.7a6 6 0 0 1-12 0C6 10.1 12 3.5 12 3.5z"/>'),
+    clima: sv('<path d="M10 13.5V5a2 2 0 0 1 4 0v8.5a4 4 0 1 1-4 0z"/><path d="M12 9v6"/>'),
+    equip: sv('<path d="M14.7 6.3a4 4 0 0 0 4.9 5.1l-8.4 8.4a2.1 2.1 0 0 1-3-3l8.4-8.4a4 4 0 0 0-1.9-2.1z"/><path d="M14.7 6.3 17 4l3 3-2.3 2.3"/>'),
+    acess: sv('<circle cx="12" cy="4.5" r="1.6"/><path d="M5.5 8.5h13M12 8.5v5.5m0 0-3.5 6m3.5-6 3.5 6"/>'),
+    luz: sv('<path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9V16h7v-2.1A6 6 0 0 0 12 3z"/>'),
+    limpeza: sv('<path d="M12 3v8M7.5 11h9l1.5 9H6z"/><path d="M10 20v-4M14 20v-4"/>'),
+    mobil: sv('<path d="M6.5 12V4.5h11V12M5 12h14v3.5H5zM7 15.5V20M17 15.5V20"/>'),
+    up: sv('<path d="M12 19V5M5.5 11.5 12 5l6.5 6.5"/>'),
+    home: sv('<path d="M4 11 12 4l8 7v9h-5v-6H9v6H4z"/>'),
+    plus: sv('<path d="M12 5v14M5 12h14"/>', ' stroke-width="2.4"'),
+    bell: sv('<path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15zM10 20.5a2 2 0 0 0 4 0"/>'),
+    user: sv('<circle cx="12" cy="8.5" r="3.8"/><path d="M4.5 20a7.5 7.5 0 0 1 15 0"/>'),
+    chart: sv('<path d="M4 20V4M4 20h16M8 16v-5M12 16V8M16 16v-3"/>'),
+    back: sv('<path d="M15 5 8 12l7 7"/>'),
+    pin: sv('<path d="M12 21s-6.5-6-6.5-11a6.5 6.5 0 0 1 13 0c0 5-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.3"/>'),
+    eye: sv('<path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="2.8"/>'),
+    check: sv('<path d="m5 12.5 4.5 4.5L19 7.5"/>', ' stroke-width="3"'),
+    camera: sv('<path d="M4 8h3l1.5-2.5h7L17 8h3v11H4z"/><circle cx="12" cy="13" r="3.5"/>'),
+    send: sv('<path d="M4 12 20 4l-5 16-3-7z"/>'),
+    tool: sv('<path d="M14.7 6.3a4 4 0 0 0 4.9 5.1l-8.4 8.4a2.1 2.1 0 0 1-3-3l8.4-8.4a4 4 0 0 0-1.9-2.1z"/>')
+  };
+
+  /* ---------- Domínio ---------- */
+  const CATS = {
+    wifi: "Wi-Fi", wc: "Casas de banho", clima: "Climatização", equip: "Equipamento",
+    acess: "Acessibilidade", luz: "Iluminação", limpeza: "Limpeza", mobil: "Mobiliário"
+  };
+  const ESTADOS = ["reportado", "visto", "resolucao", "resolvido"];
+  const EST_LABEL = { reportado: "Reportado", visto: "Visto pelos serviços", resolucao: "Em resolução", resolvido: "Resolvido" };
+  const EST_SHORT = { reportado: "Reportado", visto: "Visto", resolucao: "Em resolução", resolvido: "Resolvido" };
+  const ZONAS = ["Sala de aula", "Laboratório", "Biblioteca", "Bar / cantina", "Auditório", "Casas de banho", "Corredores e escadas", "Exterior"];
+  const ESCOLAS = {
+    "ESTG": { nome: "ESTG · Viana do Castelo", locais: ZONAS },
+    "ESE": { nome: "ESE · Viana do Castelo", locais: ZONAS },
+    "ESS": { nome: "ESS · Viana do Castelo", locais: ZONAS },
+    "ESA": { nome: "ESA · Ponte de Lima", locais: ZONAS },
+    "ESCE": { nome: "ESCE · Valença", locais: ZONAS },
+    "ESDL": { nome: "ESDL · Melgaço", locais: ZONAS }
+  };
+
+  const MIN = 60000, HR = 60 * MIN, DAY = 24 * HR;
+  const NOW = Date.now();
+  const ago = ms => NOW - ms;
+  const SERV = "Serviços Técnicos";
+
+  const issues = [
+    { id: 1, titulo: "Wi-Fi cai constantemente na sala S2.4", desc: "Durante as aulas de Programação a ligação à eduroam cai de 5 em 5 minutos. Já aconteceu em várias aulas esta semana e não conseguimos fazer os exercícios.", cat: "wifi", escola: "ESTG", local: "Sala de aula", sala: "S2.4", autor: "Ana Costa", votos: 34, votei: true, sigo: true,
+      hist: [{ e: "reportado", ts: ago(3 * DAY) }, { e: "visto", ts: ago(2 * DAY + 4 * HR), por: SERV }, { e: "resolucao", ts: ago(20 * HR), por: SERV, nota: "Access point do piso 2 identificado como defeituoso. Substituição encomendada." }],
+      coms: [{ autor: "Rui Martins", txt: "Na S2.6 é igual, sobretudo à tarde.", ts: ago(2 * DAY + 9 * HR) }, { autor: SERV, oficial: true, txt: "Obrigado a todos os que reportaram. O equipamento novo chega até sexta-feira.", ts: ago(20 * HR) }] },
+    { id: 2, titulo: "Máquina de café do bar fica com as moedas", desc: "A máquina junto à entrada do bar aceita as moedas mas não serve nada nem devolve o dinheiro.", cat: "equip", escola: "ESTG", local: "Bar / cantina", sala: "Entrada", autor: "Inês Faria", votos: 21, votei: false, sigo: true,
+      hist: [{ e: "reportado", ts: ago(26 * HR) }, { e: "visto", ts: ago(6 * HR), por: SERV, nota: "Contactámos a empresa responsável pela máquina." }],
+      coms: [{ autor: "Tiago Sousa", txt: "Perdi 1,20 € hoje de manhã.", ts: ago(9 * HR) }] },
+    { id: 3, titulo: "Casa de banho do piso 1 sem papel há 3 dias", desc: "Casa de banho masculina do piso 1, ao lado da sala S1.8. Sem papel e sem sabão.", cat: "wc", escola: "ESTG", local: "Casas de banho", sala: "Piso 1", autor: "João Pereira", votos: 12, votei: false, sigo: false,
+      hist: [{ e: "reportado", ts: ago(5 * HR) }], coms: [] },
+    { id: 4, titulo: "Aquecimento desligado no auditório", desc: "Nas aulas das 8h30 está tanto frio que muita gente assiste de casaco e cachecol.", cat: "clima", escola: "ESTG", local: "Auditório", sala: "Auditório principal", autor: "Marta Lopes", votos: 18, votei: true, sigo: false,
+      hist: [{ e: "reportado", ts: ago(2 * DAY) }, { e: "visto", ts: ago(1 * DAY), por: SERV }], coms: [] },
+    { id: 5, titulo: "Tomadas sem corrente nas mesas junto à janela", desc: "As tomadas das mesas do lado da janela da biblioteca não funcionam. Em época de exames há sempre fila pelas outras.", cat: "equip", escola: "ESTG", local: "Biblioteca", sala: "Piso 0", autor: "Carolina Reis", votos: 27, votei: false, sigo: false,
+      hist: [{ e: "reportado", ts: ago(6 * DAY) }, { e: "visto", ts: ago(5 * DAY), por: SERV }, { e: "resolucao", ts: ago(3 * DAY), por: SERV, nota: "Disjuntor a substituir pelo eletricista." }],
+      coms: [{ autor: "Pedro Gomes", txt: "Seria bom haver também mais tomadas no piso 1.", ts: ago(4 * DAY) }] },
+    { id: 6, titulo: "Rampa de acesso à biblioteca com piso partido", desc: "Há lajes soltas a meio da rampa. Uma colega em cadeira de rodas teve de dar a volta ao edifício.", cat: "acess", escola: "ESE", local: "Biblioteca", sala: "Entrada sul", autor: "Beatriz Alves", votos: 15, votei: false, sigo: false,
+      hist: [{ e: "reportado", ts: ago(30 * HR) }], coms: [] },
+    { id: 7, titulo: "Projetor do laboratório L1.2 com cores trocadas", desc: "Tudo aparece em tons de rosa. Impossível ver gráficos.", cat: "equip", escola: "ESTG", local: "Laboratório", sala: "L1.2", autor: "Ana Costa", votos: 9, votei: true, sigo: true,
+      hist: [{ e: "reportado", ts: ago(9 * DAY) }, { e: "visto", ts: ago(8 * DAY), por: SERV }, { e: "resolucao", ts: ago(8 * DAY - 3 * HR), por: SERV }, { e: "resolvido", ts: ago(7 * DAY), por: SERV, nota: "Cabo VGA substituído e projetor testado." }],
+      coms: [{ autor: "Ana Costa", txt: "Confirmo, já está a funcionar. Obrigada!", ts: ago(6 * DAY) }] },
+    { id: 8, titulo: "Lâmpadas fundidas no corredor do piso 2", desc: "Metade do corredor fica às escuras ao fim do dia.", cat: "luz", escola: "ESTG", local: "Corredores e escadas", sala: "Piso 2", autor: "Hugo Ribeiro", votos: 6, votei: false, sigo: false,
+      hist: [{ e: "reportado", ts: ago(4 * DAY) }, { e: "visto", ts: ago(4 * DAY - 2 * HR), por: SERV }, { e: "resolvido", ts: ago(3 * DAY), por: SERV }], coms: [] }
+  ];
+
+  const notifs = [
+    { id: 1, issue: 1, txt: "“Wi-Fi cai constantemente na sala S2.4” passou para Em resolução", ts: ago(20 * HR), lida: false },
+    { id: 2, issue: 2, txt: "Os Serviços Técnicos viram “Máquina de café do bar fica com as moedas”", ts: ago(6 * HR), lida: false },
+    { id: 3, issue: 1, txt: "Serviços Técnicos responderam em “Wi-Fi cai constantemente na sala S2.4”", ts: ago(20 * HR), lida: true },
+    { id: 4, issue: 7, txt: "“Projetor do laboratório L1.2 com cores trocadas” foi resolvido. Confirmas?", ts: ago(7 * DAY), lida: true }
+  ];
+
+  const S = {
+    role: "estudante",
+    me: "Ana Costa",
+    curso: "Eng.ª Informática · 2.º ano",
+    filtro: { cat: "todas", estado: "abertos", ordem: "votos", escola: "ESTG" },
+    live: true,
+    draft: { cat: "", foto: null },
+    nextId: 9,
+    nextNotif: 5
+  };
+  try { const r = sessionStorage.getItem("cf-role"); if (r === "servicos" || r === "estudante") S.role = r; } catch (e) { /* sem storage */ }
+
+  /* ---------- Utilitários ---------- */
+  const $ = s => document.querySelector(s);
+  const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const estado = i => i.hist[i.hist.length - 1].e;
+  const byId = id => issues.find(i => i.id === id);
+  function rel(ts) {
+    const d = Date.now() - ts;
+    if (d < MIN) return "agora";
+    if (d < HR) return "há " + Math.round(d / MIN) + " min";
+    if (d < DAY) return "há " + Math.round(d / HR) + " h";
+    const n = Math.round(d / DAY);
+    return n === 1 ? "ontem" : "há " + n + " dias";
+  }
+  const initials = n => n.split(" ").map(p => p[0]).slice(0, 2).join("");
+  const nVotos = n => n + (n === 1 ? " voto" : " votos");
+  const pill = e => '<span class="pill st-' + e + '">' + EST_SHORT[e] + "</span>";
+  const unread = () => notifs.filter(n => !n.lida).length;
+
+  /* ---------- Rotas ---------- */
+  const SCREENS = [
+    ["entrar", "Entrar com email @ipvc.pt"],
+    ["feed", "Feed de problemas"],
+    ["problema-1", "Detalhe de um problema"],
+    ["novo", "Nova ocorrência"],
+    ["notificacoes", "Notificações"],
+    ["perfil", "Perfil"],
+    ["painel", "Painel dos serviços"]
+  ];
+
+  function route() {
+    const h = (location.hash || "#feed").slice(1);
+    const m = h.match(/^problema-(\d+)$/);
+    let html, tab = h;
+    if (m && byId(+m[1])) { html = vDetail(byId(+m[1])); tab = "feed"; }
+    else if (h === "entrar") html = vLogin();
+    else if (h === "novo") html = vNovo();
+    else if (h === "notificacoes") html = vNotifs();
+    else if (h === "perfil") html = vPerfil();
+    else if (h === "painel") html = vPainel();
+    else { html = vFeed(); tab = "feed"; }
+    $("#screen").innerHTML = html;
+    $("#screen").scrollTop = 0;
+    renderTabbar(h === "entrar" ? null : tab);
+    renderAside(h);
+    if (h === "novo") bindNovo();
+  }
+
+  function renderTabbar(active) {
+    const tb = $("#tabbar");
+    if (!active) { tb.hidden = true; return; }
+    tb.hidden = false;
+    const items = [["feed", "Início", IC.home]];
+    if (S.role === "servicos") items.push(["painel", "Painel", IC.chart]);
+    items.push(["novo", "Reportar", IC.plus, true], ["notificacoes", "Alertas", IC.bell], ["perfil", "Perfil", IC.user]);
+    tb.innerHTML = items.map(([h, l, ic, cta]) => {
+      const b = h === "notificacoes" && unread() ? '<span class="badge">' + unread() + "</span>" : "";
+      const icon = cta ? '<span class="cta-dot">' + ic + "</span>" : ic;
+      return '<a href="#' + h + '" class="' + (active === h ? "on " : "") + (cta ? "cta" : "") + '"' + (active === h ? ' aria-current="page"' : "") + ">" + icon + l + b + "</a>";
+    }).join("");
+  }
+
+  function roleSeg() {
+    return [["estudante", "Estudante"], ["servicos", "Serviços técnicos"]].map(([v, l]) =>
+      '<button type="button" data-act="role" data-v="' + v + '" aria-pressed="' + (S.role === v) + '">' + l + "</button>").join("");
+  }
+
+  function renderAside(h) {
+    $("#screenLinks").innerHTML = SCREENS.map(([k, l]) =>
+      '<li><a href="#' + k + '" class="' + (h === k || (k === "feed" && !location.hash) ? "on" : "") + '">' + l + "</a></li>").join("");
+    $("#roleSegAside").innerHTML = roleSeg();
+    $("#liveToggle").textContent = S.live ? "Pausar eventos ao vivo" : "Retomar eventos ao vivo";
+    $("#bannerRole").textContent = S.role === "servicos" ? "a ver como Serviços" : "a ver como Estudante";
+  }
+
+  /* ---------- Vistas ---------- */
+  function liveBadge() {
+    return '<span class="live' + (S.live ? "" : " off") + '"><i></i>' + (S.live ? "Ao vivo" : "Pausado") + "</span>";
+  }
+
+  function vFeed() {
+    const f = S.filtro;
+    let list = issues.filter(i => i.escola === f.escola);
+    const abertos = list.filter(i => estado(i) !== "resolvido").length;
+    const resSemana = list.filter(i => estado(i) === "resolvido" && Date.now() - i.hist[i.hist.length - 1].ts < 7 * DAY + HR).length;
+    const meusVotos = issues.filter(i => i.votei).length;
+    if (f.cat !== "todas") list = list.filter(i => i.cat === f.cat);
+    if (f.estado === "abertos") list = list.filter(i => estado(i) !== "resolvido");
+    if (f.estado === "resolvidos") list = list.filter(i => estado(i) === "resolvido");
+    list.sort(f.ordem === "votos" ? (a, b) => b.votos - a.votos : (a, b) => b.hist[0].ts - a.hist[0].ts);
+
+    const catChips = ['<button type="button" class="chip" data-act="fcat" data-v="todas" aria-pressed="' + (f.cat === "todas") + '">Todas</button>']
+      .concat(Object.keys(CATS).map(k => '<button type="button" class="chip" data-act="fcat" data-v="' + k + '" aria-pressed="' + (f.cat === k) + '">' + IC[k] + CATS[k] + "</button>")).join("");
+
+    return '<div class="topbar"><div class="brand"><span class="brand-mark">' + IC.tool + "</span><h1>Campus Fix</h1></div>" + liveBadge() + "</div>" +
+      '<div class="pad stack" style="padding-bottom:12px">' +
+        '<select class="plain" aria-label="Escola" data-act="fescola">' + Object.keys(ESCOLAS).map(k => '<option value="' + k + '"' + (k === f.escola ? " selected" : "") + ">" + ESCOLAS[k].nome + "</option>").join("") + "</select>" +
+        '<div class="summary"><div class="sum"><b>' + abertos + '</b><span>em aberto</span></div><div class="sum"><b>' + resSemana + '</b><span>resolvidos 7 dias</span></div><div class="sum"><b>' + meusVotos + '</b><span>votados por ti</span></div></div>' +
+      "</div>" +
+      '<div class="chips" role="group" aria-label="Categoria">' + catChips + "</div>" +
+      '<div class="pad row-between" style="padding-top:10px;padding-bottom:6px">' +
+        '<div class="seg" role="group" aria-label="Estado">' + [["abertos", "Abertos"], ["resolvidos", "Resolvidos"], ["todos", "Todos"]].map(([v, l]) => '<button type="button" data-act="fest" data-v="' + v + '" aria-pressed="' + (f.estado === v) + '">' + l + "</button>").join("") + "</div>" +
+        '<select class="plain" aria-label="Ordenar" data-act="fordem"><option value="votos"' + (f.ordem === "votos" ? " selected" : "") + '>Mais votados</option><option value="recentes"' + (f.ordem === "recentes" ? " selected" : "") + ">Mais recentes</option></select>" +
+      "</div>" +
+      '<div id="feedList">' + (list.length ? list.map(card).join("") : '<div class="empty">Nada por aqui com estes filtros. Se encontrares um problema, reporta-o.</div>') + "</div>";
+  }
+
+  function card(i) {
+    return '<a class="card" href="#problema-' + i.id + '">' +
+      '<span class="cat-tile">' + IC[i.cat] + "</span>" +
+      "<div><h3>" + esc(i.titulo) + '</h3><div class="meta">' + esc(i.local) + " · " + esc(i.sala) + " · " + rel(i.hist[0].ts) + "</div>" + pill(estado(i)) +
+        '<div class="vote-row"><span class="vote-count">' + nVotos(i.votos) + "</span>" +
+        '<button type="button" class="vote-btn' + (i.votei ? " on" : "") + '" data-act="vote" data-id="' + i.id + '" id="vm-' + i.id + '" aria-pressed="' + i.votei + '">' + (i.votei ? IC.check + "Votado" : IC.up + "Votar") + "</button></div>" +
+      "</div></a>";
+  }
+
+  function vDetail(i) {
+    const e = estado(i);
+    const done = {};
+    i.hist.forEach(h => { done[h.e] = h; });
+    const idx = ESTADOS.indexOf(e);
+    const tl = ESTADOS.map((st, k) => {
+      const h = done[st];
+      const skipped = !h && k < idx;
+      if (skipped) return "";
+      const cls = h ? "done st-" + st : "todo";
+      return '<li class="' + cls + '"><span class="dot">' + (h ? IC.check : "") + "</span><div>" +
+        '<div class="tl-title">' + EST_LABEL[st] + "</div>" +
+        (h ? '<div class="tl-note">' + rel(h.ts) + (h.por ? " · " + esc(h.por) : "") + (h.nota ? "<br>" + esc(h.nota) : "") + "</div>" : "") +
+        "</div></li>";
+    }).join("");
+
+    let staff = "";
+    if (S.role === "servicos" && e !== "resolvido") {
+      const next = ESTADOS.slice(idx + 1);
+      staff = '<div class="staff-box"><span class="lbl">Ações dos serviços</span>' +
+        '<input type="text" id="staffNote" placeholder="Nota pública (opcional), ex.: peça encomendada" aria-label="Nota pública">' +
+        '<div class="btn-row">' + next.map(st => '<button type="button" class="btn small' + (st === "resolvido" ? " dark" : "") + '" data-act="setstate" data-id="' + i.id + '" data-v="' + st + '">Marcar: ' + EST_SHORT[st] + "</button>").join("") + "</div></div>";
+    }
+
+    const photo = i.foto ? '<img src="' + i.foto + '" alt="Fotografia do problema">' : IC[i.cat] + '<span class="cap">Fotografia enviada pelo autor</span>';
+    const coms = i.coms.length ? i.coms.map(c =>
+      '<div class="comment' + (c.oficial ? " oficial" : "") + '"><span class="avatar">' + (c.oficial ? IC.tool.replace("<svg", '<svg width="16" height="16"') : esc(initials(c.autor))) + "</span><div>" +
+      '<div class="who">' + esc(c.autor) + (c.oficial ? '<span class="tag-oficial">Resposta oficial</span>' : "") + "<small>" + rel(c.ts) + "</small></div><p>" + esc(c.txt) + "</p></div></div>").join("")
+      : '<p class="tl-note" style="margin:0">Ainda sem comentários.</p>';
+
+    return '<div class="topbar bordered"><a class="icon-btn" href="#feed" aria-label="Voltar ao feed">' + IC.back + "</a><h1>Problema #" + i.id + "</h1>" + liveBadge() + "</div>" +
+      '<div class="photo">' + photo + "</div>" +
+      '<div class="detail-head"><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">' + pill(e) + '<span class="chip" style="padding:3px 9px">' + IC[i.cat] + CATS[i.cat] + "</span></div>" +
+        "<h2>" + esc(i.titulo) + "</h2>" +
+        '<div class="meta" style="display:flex;gap:4px;align-items:center"><span style="width:15px;height:15px;display:inline-flex">' + IC.pin + "</span>" + esc(ESCOLAS[i.escola].nome.split(" · ")[0]) + " · " + esc(i.local) + " · " + esc(i.sala) + "</div>" +
+        '<div class="meta">Reportado por ' + esc(i.autor) + " " + rel(i.hist[0].ts) + "</div>" +
+        '<p class="desc">' + esc(i.desc) + "</p></div>" +
+      '<div class="actions"><button type="button" class="btn grow ' + (i.votei ? "voted" : "primary") + '" data-act="vote" data-id="' + i.id + '" id="vb-' + i.id + '" aria-pressed="' + i.votei + '">' + (i.votei ? IC.check + "Votado" : IC.up + "Votar nesta ocorrência") + "</button>" +
+        '<button type="button" class="btn" data-act="follow" data-id="' + i.id + '" aria-pressed="' + i.sigo + '">' + IC.eye + (i.sigo ? "A seguir" : "Seguir") + "</button></div>" +
+      '<p class="vote-note">' + nVotos(i.votos) + " · as ocorrências mais votadas têm prioridade</p>" +
+      '<div class="section"><h3>Estado</h3>' + staff + '<ol class="timeline">' + tl + "</ol></div>" +
+      '<div class="section"><h3>Comentários (' + i.coms.length + ")</h3>" + coms +
+        '<form class="composer" data-form="comment" data-id="' + i.id + '"><input type="text" id="comTxt" placeholder="' + (S.role === "servicos" ? "Responder como Serviços Técnicos" : "Acrescenta informação útil") + '" aria-label="Escrever comentário" required><button class="btn primary" type="submit" aria-label="Enviar comentário">' + IC.send + "</button></form></div>";
+  }
+
+  function vNovo() {
+    const d = S.draft;
+    const esc0 = S.filtro.escola;
+    return '<div class="topbar bordered"><a class="icon-btn" href="#feed" aria-label="Cancelar">' + IC.back + "</a><h1>Nova ocorrência</h1></div>" +
+      '<form class="pad stack" style="padding-top:16px;padding-bottom:24px" data-form="novo" novalidate>' +
+        '<div class="field"><label for="nTitulo">O que se passa?</label><input type="text" id="nTitulo" placeholder="Ex.: Wi-Fi não funciona na sala S2.4" maxlength="90" required></div>' +
+        '<div id="dupBox"></div>' +
+        '<div class="field"><span class="lab" id="catLbl">Categoria</span><div class="cat-pick" role="group" aria-labelledby="catLbl">' +
+          Object.keys(CATS).map(k => '<button type="button" data-act="ncat" data-v="' + k + '" aria-pressed="' + (d.cat === k) + '">' + IC[k] + CATS[k].replace("Casas de banho", "WC").replace("Climatização", "Clima").replace("Acessibilidade", "Acesso") + "</button>").join("") +
+        "</div></div>" +
+        '<div class="grid2"><div class="field"><label for="nEscola">Escola</label><select class="input" id="nEscola">' + Object.keys(ESCOLAS).map(k => '<option value="' + k + '"' + (k === esc0 ? " selected" : "") + ">" + k + "</option>").join("") + "</select></div>" +
+          '<div class="field"><label for="nLocal">Tipo de espaço</label><select class="input" id="nLocal">' + ESCOLAS[esc0].locais.map(l => "<option>" + l + "</option>").join("") + "</select></div></div>" +
+        '<div class="field"><label for="nSala">Sala ou ponto exato</label><input type="text" id="nSala" placeholder="Ex.: S1.1, L2.3, piso 0 junto às escadas"><span class="hint">S = sala, L = laboratório. O primeiro número é o piso: S1.1 fica no piso 1.</span></div>' +
+        '<div class="field"><label for="nDesc">Descrição</label><textarea id="nDesc" placeholder="Desde quando? Com que frequência? Quem é afetado?"></textarea></div>' +
+        '<label class="upload" for="nFoto" id="upLbl">' + IC.camera + "<span>Adicionar fotografia<br><small>Ajuda os serviços a perceber o problema</small></span>" + '<input type="file" id="nFoto" accept="image/*"></label>' +
+        '<div id="nErr" class="error" role="alert"></div>' +
+        '<button class="btn primary" type="submit">Publicar ocorrência</button>' +
+        '<p class="tl-note" style="margin:0">A ocorrência fica visível para toda a comunidade UNIPVC e para os serviços técnicos.</p>' +
+      "</form>";
+  }
+
+  function vNotifs() {
+    const list = notifs.slice().sort((a, b) => b.ts - a.ts);
+    return '<div class="topbar bordered"><h1>Alertas</h1>' + (unread() ? '<button type="button" class="btn small" data-act="readall">Marcar tudo como lido</button>' : "") + "</div>" +
+      (list.length ? list.map(n => '<a class="notif' + (n.lida ? "" : " unread") + '" href="#problema-' + n.issue + '" data-act="opennotif" data-id="' + n.id + '"><span class="ud"></span><div><div class="ntxt">' + esc(n.txt) + '</div><div class="meta">' + rel(n.ts) + "</div></div></a>").join("")
+        : '<div class="empty">Sem alertas. Segue um problema para seres avisado quando mudar de estado.</div>') +
+      '<p class="pad tl-note" style="padding-top:14px">Recebes alertas dos problemas que reportaste, votaste ou segues.</p>';
+  }
+
+  function vPerfil() {
+    const meus = issues.filter(i => i.autor === S.me);
+    const sigo = issues.filter(i => i.sigo);
+    const isServ = S.role === "servicos";
+    return '<div class="topbar"><h1>Perfil</h1></div>' +
+      '<div class="profile-head"><span class="avatar">' + (isServ ? "ST" : initials(S.me)) + "</span><div><h2 style=\"font-size:20px\">" + (isServ ? "Serviços Técnicos" : esc(S.me)) + '</h2><div class="meta">' + (isServ ? "ESTG · equipa de manutenção" : esc(S.curso)) + '</div><div class="meta">' + (isServ ? "manutencao@estg.ipvc.pt" : "ana.costa@ipvc.pt") + "</div></div></div>" +
+      '<div class="pad stack" style="padding-bottom:16px"><div class="stat-row"><div class="sum"><b>' + meus.length + '</b><span>reportadas</span></div><div class="sum"><b>' + issues.filter(i => i.votei).length + '</b><span>votadas</span></div><div class="sum"><b>' + meus.filter(i => estado(i) === "resolvido").length + '</b><span>resolvidas</span></div></div>' +
+      '<div class="field"><span class="lab">Ver o protótipo como</span><div class="seg" role="group" aria-label="Perfil de utilizador">' + roleSeg() + "</div></div></div>" +
+      '<div class="section" style="padding:16px 0 0"><h3 class="pad">As minhas ocorrências</h3><div>' + (meus.length ? meus.map(card).join("") : '<div class="empty">Ainda não reportaste nada.</div>') + "</div></div>" +
+      '<div class="section" style="padding:16px 0 0"><h3 class="pad">A seguir</h3><div>' + (sigo.length ? sigo.map(card).join("") : '<div class="empty">Não segues nenhum problema.</div>') + "</div></div>" +
+      '<div class="pad" style="padding-top:16px;padding-bottom:24px"><a class="btn" href="#entrar" style="width:100%;text-decoration:none">Terminar sessão</a></div>';
+  }
+
+  function vPainel() {
+    const esc0 = S.filtro.escola;
+    const list = issues.filter(i => i.escola === esc0);
+    const count = st => list.filter(i => estado(i) === st).length;
+    const resolved = list.filter(i => estado(i) === "resolvido");
+    const avg = resolved.length ? resolved.reduce((s, i) => s + (i.hist[i.hist.length - 1].ts - i.hist[0].ts), 0) / resolved.length / DAY : 0;
+    const open = list.filter(i => estado(i) !== "resolvido");
+    const byCat = Object.keys(CATS).map(k => [k, open.filter(i => i.cat === k).reduce((s, i) => s + 1, 0)]).filter(x => x[1] > 0).sort((a, b) => b[1] - a[1]);
+    const maxC = Math.max(1, ...byCat.map(x => x[1]));
+    const queue = open.slice().sort((a, b) => b.votos - a.votos);
+    const note = S.role !== "servicos" ? '<div class="pad"><p class="dup" style="margin:0">Este painel é para os serviços técnicos. Muda o perfil para “Serviços técnicos” para poderes alterar estados.</p></div>' : "";
+    return '<div class="topbar"><h1>Painel · ' + esc0 + "</h1>" + liveBadge() + "</div>" + note +
+      '<div class="pad stack" style="padding-top:8px;padding-bottom:16px">' +
+        '<div class="tiles">' + ESTADOS.map(st => '<div class="tile st-' + st + '" style="border-left-color:currentColor"><b>' + count(st) + "</b><span>" + EST_SHORT[st] + "</span></div>").join("") + "</div>" +
+        '<div class="sum"><b>' + avg.toFixed(1).replace(".", ",") + ' dias</b><span>tempo médio desde o registo até à resolução</span></div>' +
+      "</div>" +
+      '<div class="section"><h3>Problemas em aberto por categoria</h3><div class="bars">' +
+        (byCat.length ? byCat.map(([k, n]) => '<div class="bar"><span>' + CATS[k] + '</span><span class="track"><span class="fill" style="width:' + (n / maxC * 100) + '%;display:block"></span></span><b>' + n + "</b></div>").join("") : '<p class="tl-note">Sem problemas em aberto.</p>') +
+      "</div></div>" +
+      '<div class="section"><h3>Fila por prioridade da comunidade</h3><div>' +
+        queue.map(i => '<div class="queue-row"><div><a href="#problema-' + i.id + '">' + esc(i.titulo) + '</a><div class="meta">' + i.votos + " votos · " + esc(i.local) + " · " + rel(i.hist[0].ts) + "</div></div>" + pill(estado(i)) + "</div>").join("") +
+      "</div></div>";
+  }
+
+  function vLogin() {
+    return '<div class="login"><span class="big-mark">' + IC.tool + "</span>" +
+      "<div><h2>Campus Fix</h2><p>Vê, reporta e acompanha os problemas do teu campus. Quanto mais pessoas votam, mais depressa chegam a quem os resolve.</p></div>" +
+      '<form class="stack" data-form="login" novalidate>' +
+        '<div class="field"><label for="lEmail">Email institucional</label><input type="email" id="lEmail" placeholder="nome@ipvc.pt" value="ana.costa@ipvc.pt" autocomplete="username"></div>' +
+        '<div class="field"><label for="lPass">Palavra-passe</label><input type="password" id="lPass" value="prototipo" autocomplete="current-password"></div>' +
+        '<div id="lErr" class="error" role="alert"></div>' +
+        '<button class="btn primary" type="submit">Entrar</button>' +
+        '<p class="tl-note" style="margin:0">Só contas @ipvc.pt podem entrar, para garantir que quem reporta e vota é da comunidade.</p>' +
+      "</form></div>";
+  }
+
+  /* ---------- Ações ---------- */
+  function toggleVote(id) {
+    const i = byId(id);
+    i.votei = !i.votei;
+    i.votos += i.votei ? 1 : -1;
+    if (i.votei) i.sigo = true;
+    refresh();
+  }
+
+  function setState(id, st, nota, by) {
+    const i = byId(id);
+    const cur = ESTADOS.indexOf(estado(i));
+    if (ESTADOS.indexOf(st) <= cur) return;
+    i.hist.push({ e: st, ts: Date.now(), por: by || SERV, nota: nota || "" });
+    if (nota) i.coms.push({ autor: SERV, oficial: true, txt: nota, ts: Date.now() });
+    if (i.sigo || i.votei || i.autor === S.me) {
+      const txt = st === "resolvido" ? "“" + i.titulo + "” foi resolvido. Confirmas?" : "“" + i.titulo + "” passou para " + EST_SHORT[st];
+      notifs.push({ id: S.nextNotif++, issue: i.id, txt, ts: Date.now(), lida: false });
+      return txt;
+    }
+    return null;
+  }
+
+  function refresh(flashId) {
+    const h = (location.hash || "#feed").slice(1);
+    const scroll = $("#screen").scrollTop;
+    const ae = document.activeElement && document.activeElement.id;
+    if (h === "novo") { renderTabbar("novo"); return; }
+    route();
+    $("#screen").scrollTop = scroll;
+    if (ae && document.getElementById(ae)) document.getElementById(ae).focus({ preventScroll: true });
+    if (flashId) ["vm-" + flashId, "vb-" + flashId].forEach(k => { const el = document.getElementById(k); if (el) { el.classList.remove("flash"); void el.offsetWidth; el.classList.add("flash"); } });
+  }
+
+  let toastTimer;
+  function toast(title, sub, issueId) {
+    const t = $("#toast");
+    t.innerHTML = '<span class="t-ic">' + IC.bell + "</span><div>" + esc(title) + (sub ? "<small>" + esc(sub) + "</small>" : "") + "</div>";
+    t.dataset.issue = issueId || "";
+    t.classList.add("show");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove("show"), 4200);
+  }
+  $("#toast").addEventListener("click", () => {
+    const id = $("#toast").dataset.issue;
+    $("#toast").classList.remove("show");
+    if (id) location.hash = "#problema-" + id;
+  });
+
+  document.addEventListener("click", ev => {
+    const el = ev.target.closest("[data-act]");
+    if (!el) return;
+    const a = el.dataset.act, v = el.dataset.v, id = +el.dataset.id;
+    if (a === "vote") { ev.preventDefault(); ev.stopPropagation(); toggleVote(id); }
+    else if (a === "follow") { const i = byId(id); i.sigo = !i.sigo; refresh(); }
+    else if (a === "role") { S.role = v; try { sessionStorage.setItem("cf-role", v); } catch (e) { /* ignorar */ } refresh(); }
+    else if (a === "fcat") { S.filtro.cat = v; refresh(); }
+    else if (a === "fest") { S.filtro.estado = v; refresh(); }
+    else if (a === "setstate") {
+      const note = ($("#staffNote") || {}).value || "";
+      setState(id, v, note.trim());
+      toast("Estado atualizado para " + EST_SHORT[v], "Quem votou ou segue este problema foi notificado em tempo real.");
+      refresh();
+    }
+    else if (a === "readall") { notifs.forEach(n => n.lida = true); refresh(); }
+    else if (a === "opennotif") { const n = notifs.find(x => x.id === id); if (n) n.lida = true; }
+    else if (a === "ncat") {
+      S.draft.cat = v;
+      document.querySelectorAll('[data-act="ncat"]').forEach(b => b.setAttribute("aria-pressed", b.dataset.v === v));
+      checkDup();
+    }
+    else if (a === "dupvote") { ev.preventDefault(); const i = byId(id); if (!i.votei) toggleVote(id); location.hash = "#problema-" + id; toast("Voto registado", "Em vez de criares uma ocorrência duplicada, votaste na que já existia.", id); }
+  });
+
+  document.addEventListener("change", ev => {
+    const el = ev.target;
+    if (el.dataset.act === "fescola") { S.filtro.escola = el.value; refresh(); }
+    if (el.dataset.act === "fordem") { S.filtro.ordem = el.value; refresh(); }
+  });
+
+  $("#liveToggle").addEventListener("click", () => { S.live = !S.live; refresh(); });
+
+  document.addEventListener("submit", ev => {
+    const f = ev.target;
+    ev.preventDefault();
+    if (f.dataset.form === "login") {
+      const em = $("#lEmail").value.trim().toLowerCase();
+      if (!/^[^@\s]+@([a-z0-9-]+\.)*ipvc\.pt$/.test(em)) { $("#lErr").textContent = "Usa o teu email institucional, terminado em @ipvc.pt."; return; }
+      if (!$("#lPass").value) { $("#lErr").textContent = "Escreve a palavra-passe."; return; }
+      location.hash = "#feed";
+    }
+    if (f.dataset.form === "comment") {
+      const txt = $("#comTxt").value.trim();
+      if (!txt) return;
+      const i = byId(+f.dataset.id);
+      const oficial = S.role === "servicos";
+      i.coms.push({ autor: oficial ? SERV : S.me, oficial, txt, ts: Date.now() });
+      if (!oficial) i.sigo = true;
+      refresh();
+    }
+    if (f.dataset.form === "novo") {
+      const t = $("#nTitulo").value.trim();
+      if (t.length < 6) { $("#nErr").textContent = "Escreve um título com pelo menos 6 caracteres."; $("#nTitulo").focus(); return; }
+      if (!S.draft.cat) { $("#nErr").textContent = "Escolhe uma categoria."; return; }
+      const i = { id: S.nextId++, titulo: t, desc: $("#nDesc").value.trim() || "Sem descrição adicional.", cat: S.draft.cat, escola: $("#nEscola").value, local: $("#nLocal").value, sala: $("#nSala").value.trim() || "Sem indicação", autor: S.me, votos: 1, votei: true, sigo: true, foto: S.draft.foto, hist: [{ e: "reportado", ts: Date.now() }], coms: [] };
+      issues.push(i);
+      S.draft = { cat: "", foto: null };
+      location.hash = "#problema-" + i.id;
+      toast("Ocorrência publicada", "A comunidade já pode votar nela. Vais ser avisado quando mudar de estado.");
+    }
+  });
+
+  const STOP = new Set(["a", "o", "as", "os", "de", "da", "do", "das", "dos", "na", "no", "em", "e", "com", "sem", "não", "nao", "para", "que", "um", "uma", "sala", "piso", "há", "ha", "muito", "está", "esta"]);
+  const words = s => s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").split(/[^a-z0-9.]+/).filter(w => w.length > 2 && !STOP.has(w));
+
+  function checkDup() {
+    const box = $("#dupBox");
+    if (!box) return;
+    const t = words(($("#nTitulo") || {}).value || "");
+    const escola = ($("#nEscola") || {}).value;
+    if (!t.length) { box.innerHTML = ""; return; }
+    const hits = issues.filter(i => estado(i) !== "resolvido" && i.escola === escola).map(i => {
+      const w = new Set(words(i.titulo + " " + i.sala));
+      let s = t.filter(x => w.has(x)).length;
+      if (S.draft.cat && i.cat === S.draft.cat) s += 0.5;
+      return [i, s];
+    }).filter(x => x[1] >= 1).sort((a, b) => b[1] - a[1]).slice(0, 2);
+    box.innerHTML = hits.length ? '<div class="dup"><b>Parece que isto já foi reportado</b>' + hits.map(([i]) =>
+      '<div class="dup-item"><span>' + esc(i.titulo) + ' <span class="meta">(' + nVotos(i.votos) + ")</span></span>" +
+      (i.votei ? '<a class="btn small" href="#problema-' + i.id + '">Ver</a>' : '<button type="button" class="btn small primary" data-act="dupvote" data-id="' + i.id + '">Votar</button>') + "</div>").join("") +
+      '<span class="tl-note">Votar na ocorrência existente dá-lhe mais prioridade do que criar uma nova.</span></div>' : "";
+  }
+
+  function bindNovo() {
+    $("#nTitulo").addEventListener("input", checkDup);
+    $("#nEscola").addEventListener("change", e => {
+      $("#nLocal").innerHTML = ESCOLAS[e.target.value].locais.map(l => "<option>" + l + "</option>").join("");
+      checkDup();
+    });
+    $("#nSala").addEventListener("input", e => {
+      const v = e.target.value.trim();
+      if (/^s\d/i.test(v)) $("#nLocal").value = "Sala de aula";
+      else if (/^l\d/i.test(v)) $("#nLocal").value = "Laboratório";
+    });
+    $("#nFoto").addEventListener("change", e => {
+      const f = e.target.files && e.target.files[0];
+      if (!f) return;
+      S.draft.foto = URL.createObjectURL(f);
+      $("#upLbl").querySelector("svg").outerHTML = '<img src="' + S.draft.foto + '" alt="Pré-visualização da fotografia">';
+      $("#upLbl").querySelector("span").innerHTML = esc(f.name) + "<br><small>Toca para trocar</small>";
+    });
+  }
+
+  /* ---------- Tempo real simulado (como chegaria por Socket.IO) ---------- */
+  const SCRIPT = [
+    () => bump(1, 2),
+    () => {
+      const i = { id: S.nextId++, titulo: "Porta da sala S1.10 não fecha", desc: "A fechadura está partida e a porta abre com o vento durante as aulas.", cat: "mobil", escola: "ESTG", local: "Sala de aula", sala: "S1.10", autor: "Diogo Neves", votos: 1, votei: false, sigo: false, hist: [{ e: "reportado", ts: Date.now() }], coms: [] };
+      issues.push(i);
+      return ["Nova ocorrência no piso 1", i.titulo, i.id];
+    },
+    () => bump(5, 1),
+    () => {
+      const r = setState(2, "resolucao", "Técnico da empresa da máquina agendado para amanhã de manhã.");
+      return r ? ["Atualização num problema que segues", r, 2] : null;
+    },
+    () => bump(3, 3),
+    () => {
+      const i = byId(1);
+      i.coms.push({ autor: "Sofia Matos", txt: "Hoje de manhã esteve ainda pior, não deu para entregar o trabalho online.", ts: Date.now() });
+      return ["Novo comentário", "Sofia Matos em “" + i.titulo + "”", 1];
+    },
+    () => bump(6, 2),
+    () => {
+      const r = setState(1, "resolvido", "Access point substituído. Digam-nos se o problema voltar.");
+      return r ? ["Atualização num problema que segues", r, 1] : null;
+    },
+    () => bump(4, 1)
+  ];
+  function bump(id, n) { const i = byId(id); if (i && estado(i) !== "resolvido") { i.votos += n; return { flash: id }; } return null; }
+
+  let step = 0;
+  setInterval(() => {
+    if (!S.live || document.hidden || step >= SCRIPT.length) return;
+    const h = (location.hash || "").slice(1);
+    if (h === "entrar") return;
+    const r = SCRIPT[step++]();
+    if (r && r.flash) { refresh(r.flash); return; }
+    refresh();
+    if (Array.isArray(r)) toast(r[0], r[1], r[2]);
+  }, 7000);
+
+  window.addEventListener("hashchange", route);
+  route();
+})();
+</script>
+</body>
+</html>
